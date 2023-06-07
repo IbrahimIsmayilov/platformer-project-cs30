@@ -4,6 +4,10 @@
 # Import pygame
 import pygame
 
+# Import "join" and "isfile" methods from os to help with managing files without having to meddle with directories
+from os.path import join, isfile
+
+
 # INTIALIZE MODULES OR DIRECTORIES
 # Intialize pygame module
 pygame.init()
@@ -23,6 +27,29 @@ window = pygame.display.set_mode((WIDTH, HEIGHT))
 FPS = 60
 
 # FUNCTIONS
+
+# Function to get a background image and the coordinates to fill the entire screen
+def get_background(bg_name):
+    # Load background image
+    background = pygame.image.load(join("Assets,", "Backgrounds", bg_name))
+    # Get the background image's width and height
+    width = background.get_width()
+    height = background.get_height()
+
+    # Array to store coordinates for the position of the background images to fill the entire screen
+    bg_tiles = []
+
+    # Get all the coordinates to fill the entire screen with tiles of the background image through for loops that attain that get the value column by column. 
+    for i in range(WIDTH // width + 1):
+        for j in range(HEIGHT // height + 1):
+            # Put the data in a tuple to have its x and y coordinates be more accessible when appended to the "bg_tiles" array. Put it in a format that can access the x and y values. 
+            bg_pos = (i * width, j * height)
+            # Append it in a format that can access the x and y values 
+            bg_tiles.append(bg_pos)
+
+        
+
+
 # Main function to contain event handlers and run non-stop while program is open
 def main(window):
     # A new clock variable that will be used to track the time and set a framerate
