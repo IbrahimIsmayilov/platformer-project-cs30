@@ -30,5 +30,21 @@ def main(window):
 
     # Constant, infinitely running loop
     run = True
+    while run:
+        # A method to run every frame and make the game run at max 60 FPS on all machines
+        clock.tick(FPS)
+
+        # Event handler
+        for event in pygame.event.get():
+            if event.type == pygame.quit: # If user closes the program, quit pygame
+                run = False
+                break
+
+    # Quit pygame if the while loop has been broken
+    pygame.quit()
+
+
+# Call main function to start the game
+main()
 
 
