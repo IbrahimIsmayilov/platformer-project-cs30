@@ -29,6 +29,23 @@ window = pygame.display.set_mode((WIDTH, HEIGHT))
 FPS = 60
 
 
+# CLASSES
+# A parent class for creating all objects in the game, with shared attributes among with containing different values (terrain blocks, etc)
+class Objects:
+    # Constructor
+    def __init__(self, x, y, width, height, name):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.image = pygame.image.load(join("Assets", "Backgrounds", name))
+        self.width = width
+        self.height = height
+        self.name = name
+
+    # Methods
+    def draw(self, win):
+        win.blit(self.image, (self.rect.x, self.rect.y ))
+
+
+
 # FUNCTIONS
 # Function to get a background image and the coordinates to fill the entire screen
 def get_background(bg_name):
@@ -67,6 +84,9 @@ def draw(window, bg_array, bg_image):
 def main(window):
     # A new clock variable that will be used to track the time and set a framerate
     clock = pygame.time.Clock() 
+
+    # Array to store all the terrain block coordinates to fill the screen
+    terrain_blocks = Objects()
 
     # Call the "get_background" function and get the returned values with the coordinates to draw tiles of the background to fill the whole screen
     bg_array, bg_image = get_background("Sky.jpg") 
