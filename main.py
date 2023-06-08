@@ -33,16 +33,39 @@ FPS = 60
 # A parent class for creating all objects in the game, with shared attributes among with containing different values (terrain blocks, etc)
 class Objects:
     # Constructor
-    def __init__(self, x, y, width, height, name):
-        self.rect = pygame.Rect(x, y, width, height)
-        self.image = pygame.image.load(join("Assets", "Backgrounds", name))
-        self.width = width
-        self.height = height
-        self.name = name
+    def __init__(self, image_name, object_name):
+        self.image = pygame.image.load(join("Assets", "Backgrounds", image_name))
+        self.width = self.image.get_width()
+        self.height = self.image.get_width()
+        self.object_name = object_name
+        self.coordinate = ()
+        self.coordinates = []
 
     # Methods
     def draw(self, win):
-        win.blit(self.image, (self.rect.x, self.rect.y ))
+        for coordinate in self.coordinates:
+            win.blit(self.image, (coordinate))
+
+        pygame.display.update()
+
+
+# class background(Objects):
+#     def __init__(self, x, y, image_name, object_name):
+#         super().__init__(x, y, image_name, object_name)
+        
+
+
+class Background(Objects):
+    def __init__(self, image_name, object_name):
+        super().__init__(x, y, image_name, object_name)
+
+    def get_block(self):
+        for i in range(WIDTH // self.width + 1):
+            for j in range(HEIGHT // self.height + 1):
+                # Put the data in a tuple to have its x and y coordinates be more accessible when appended to the "bg_tiles" array. Put it in a format that can access the x and y values. 
+                self.coordinate = i * self.width, j * self.height
+                # Append it in a format that can access the x and y values 
+                self.coordinates.append(self.coordinate)
 
 
 
@@ -86,10 +109,10 @@ def main(window):
     clock = pygame.time.Clock() 
 
     # Array to store all the terrain block coordinates to fill the screen
-    terrain_blocks = Objects()
+    background = Background()
 
     # Call the "get_background" function and get the returned values with the coordinates to draw tiles of the background to fill the whole screen
-    bg_array, bg_image = get_background("Sky.jpg") 
+    # bg_array, bg_image = get_background("Sky.jpg") 
 
     # Constant, infinitely running loop
     run = True
