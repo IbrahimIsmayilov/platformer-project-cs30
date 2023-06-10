@@ -33,33 +33,29 @@ FPS = 60
 # A parent class for creating all objects in the game, with shared attributes among with containing different values (terrain blocks, etc)
 class Objects:
     # Constructor
-    def __init__(self, image_name, object_name):
-        self.image = pygame.image.load(join("Assets", "Backgrounds", image_name))
+    def __init__(self, image_folder, image_name, object_name):
+        self.image = pygame.image.load(join("Assets", image_folder, image_name))
         self.width = self.image.get_width()
         self.height = self.image.get_width()
-        self.object_name = object_name
         self.coordinate = ()
         self.coordinates = []
+        # self.rect = pygame.Rect(self.coordinate.x, self.coordinate.y, self.width, self.height)
+        self.object_name = object_name
+
 
     # Methods
     def draw(self, win):
         for coordinate in self.coordinates:
             win.blit(self.image, (coordinate))
 
-        pygame.display.update()
 
-
-# class background(Objects):
-#     def __init__(self, x, y, image_name, object_name):
-#         super().__init__(x, y, image_name, object_name)
-        
-
-
+# Class to get background
 class Background(Objects):
-    def __init__(self, image_name, object_name):
-        super().__init__(x, y, image_name, object_name)
+    def __init__(self, image_folder, image_name, object_name):
+        super().__init__(image_folder, image_name, object_name)
 
-    def get_block(self):
+    # Method to get block
+    def get_background_block_array(self):
         for i in range(WIDTH // self.width + 1):
             for j in range(HEIGHT // self.height + 1):
                 # Put the data in a tuple to have its x and y coordinates be more accessible when appended to the "bg_tiles" array. Put it in a format that can access the x and y values. 
@@ -67,40 +63,34 @@ class Background(Objects):
                 # Append it in a format that can access the x and y values 
                 self.coordinates.append(self.coordinate)
 
+# Class to get terrain blocks
+class Terrain_Blocks(Objects):
+    def __init__(self, image_folder, image_name, object_name):
+        super().__init__(image_folder, image_name, object_name)
 
+
+    # Method to get block coordinates
+    def get_terrain_block_array(self):
+        for i in range (WIDTH // self.width + 1):
+            self.coordinate = i * self.width, HEIGHT - self.height
+            self.coordinates.append(self.coordinate)
+
+# Class to draw the player
 
 # FUNCTIONS
-# Function to get a background image and the coordinates to fill the entire screen
-def get_background(bg_name):
-    # Load background image
-    background = pygame.image.load(join("Assets", "Backgrounds", bg_name))
-    # Get the background image's width and height
-    width = background.get_width()
-    height = background.get_height()
-
-    # Array to store coordinates for the position of the background images to fill the entire screen
-    bg_tiles = []
-
-    # Get all the coordinates to fill the entire screen with tiles of the background image through for loops that attain that get the value column by column. 
-    for i in range(WIDTH // width + 1):
-        for j in range(HEIGHT // height + 1):
-            # Put the data in a tuple to have its x and y coordinates be more accessible when appended to the "bg_tiles" array. Put it in a format that can access the x and y values. 
-            bg_pos = (i * width, j * height)
-            # Append it in a format that can access the x and y values 
-            bg_tiles.append(bg_pos)
-
-    # Return the array and the loaded background jpg image to be used later
-    return bg_tiles, background
-
 # THe main draw function to draw everything for the program or run other smaller drawing functions
-def draw(window, bg_array, bg_image):
-    # For every coordinate tuple in the array
-    for bg_tile in bg_array:
-        # Draw it onto the screen and fill the entire screen with it
-        window.blit(bg_image, bg_tile)
+def draw(window, background, terrain):
+
+    background.get_background_block_array()
+    background.draw(window)
+
+    terrain.get_terrain_block_array()
+    terrain.draw(window)
 
     # Update the display
     pygame.display.update()
+
+    
 
 # Main function to contain event handlers and run non-stop while program is open
 # Why pass the window parameter?
@@ -109,10 +99,10 @@ def main(window):
     clock = pygame.time.Clock() 
 
     # Array to store all the terrain block coordinates to fill the screen
-    background = Background()
+    background = Background("Backgrounds", "Sky.jpg", "The Background")
 
-    # Call the "get_background" function and get the returned values with the coordinates to draw tiles of the background to fill the whole screen
-    # bg_array, bg_image = get_background("Sky.jpg") 
+    # Store terrain object in this
+    terrain = Terrain_Blocks("Terrains", "DirtTerrain.jpg", "The Terrain")
 
     # Constant, infinitely running loop
     run = True
@@ -127,7 +117,7 @@ def main(window):
                 break
         
         # Call the draw function every frame to update the screen
-        draw(window, bg_array, bg_image)
+        draw(window, background, terrain)
 
     # Quit pygame if the while loop has been broken
     pygame.quit()
