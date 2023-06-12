@@ -130,10 +130,10 @@ class Player(Objects):
         for obj in objects:
             obj = pygame.Rect(obj)
             if self.xVel > 0:    
-                if self.rect.topRight + self.xVel > obj.rect.TopLeft - 2:
+                if self.rect.topRight + self.xVel > obj.rect.topleft - 2:
                     self.xVel = 0
             if self.xVel < 0:
-                if self.rect.topLeft + self.xVel > obj.rect.TopRight + 2:
+                if self.rect.topleft + self.xVel > obj.rect.TopRight + 2:
                     self.xVel = 0
                     
     def handle_vertical_collision(self, objects):
@@ -149,7 +149,7 @@ class Player(Objects):
                 self.collided_objects.append(obj)
 
     def handle_movement(self, objects):
-        self.handle_horizontal_collision()
+        # self.handle_horizontal_collision(objects)
         self.gravity()
         self.handle_vertical_collision(objects)
         keys = pygame.key.get_pressed()
@@ -223,7 +223,7 @@ def main(window):
         # Call the draw function every frame to update the screen
         draw(window, background, terrain, player, offset_x)
 
-        if ((player.rect.right - offset_x >= WIDTH - scroll_area_width) and self.xVel > 0) or ((player.rect.left - offset_x <= scroll_area_width) and self.xVel < 0):
+        if ((player.rect.right - offset_x >= WIDTH - scroll_area_width) and player.xVel > 0) or ((player.rect.left - offset_x <= scroll_area_width) and player.xVel < 0):
             print(player.xVel)
             offset_x += player.xVel 
 
