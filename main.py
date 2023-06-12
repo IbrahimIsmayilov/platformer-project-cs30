@@ -228,9 +228,9 @@ def main(window):
         # Call the draw function every frame to update the screen
         draw(window, background, terrain, player, offset_x)
 
-        if ((player.rect.right - offset_x >= WIDTH - scroll_area_width)) or ((player.rect.left - offset_x <= scroll_area_width)):
-            print(player.xVel)
-            offset_x += player.xVel 
+        # if ((player.rect.right - offset_x >= WIDTH - scroll_area_width)) or ((player.rect.left - offset_x <= scroll_area_width)):
+        #     print(player.xVel)
+        #     offset_x += player.xVel 
 
     # Quit pygame if the while loop has been broken
     pygame.quit()
