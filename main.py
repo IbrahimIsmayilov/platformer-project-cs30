@@ -31,7 +31,7 @@ FPS = 90
 
 # CLASSES
 # A parent class for creating all objects in the game, with shared attributes among with containing different values (terrain blocks, etc)
-class Objects(pygame.sprite.Sprite):
+class Objects():
     # Constructor
     def __init__(self, image_folder, image_name, object_name):
         self.image = pygame.image.load(join("Assets", image_folder, image_name))
@@ -44,12 +44,6 @@ class Objects(pygame.sprite.Sprite):
 
 
     # Methods
-    def load_sprite_sheets(self):
-        # Explain these please to the best of your ability
-        path = join("Assets", image_folder, image_name)
-        # images = [f for f in ]
-
-
     def draw(self, win, offset_x):
         for coordinate in self.coordinates:
             win.blit(self.image, (coordinate[0] - offset_x, coordinate[1]))
@@ -93,31 +87,24 @@ class Terrain_Blocks(Objects):
             self.get_level_3_map()
         
         
-          
-
-
 # Class to draw the player
 class Player(Objects):
     GRAVITY = 1   
 
-
     def __init__(self, image_folder, image_name, object_name):
         super().__init__(image_folder, image_name, object_name)
-        self.xVel = 3
+        self.xVel = 0
         self.yVel = 0
-        self.rect = pygame.Rect(1299, 50, self.width, self.height)
+        self.rect = pygame.Rect(600, 50, self.width, self.height)
         self.direction = "Right"
         self.jump_count = 0
         self.fall_count = 0
         self.collided_objects = []
 
     # Methods
-    def move_left(self):
-        self.rect.x += -self.xVel
-     
-    def move_right(self):
+    def move(self, x_vel):
+        self.xVel = x_vel
         self.rect.x += self.xVel
-        
 
     def gravity(self):
         self.yVel += min(1, self.fall_count / FPS * 3)
@@ -139,6 +126,16 @@ class Player(Objects):
         self.count = 0
         self.yVel *= -1
 
+    def handle_horizontal_collision(self, objects):
+        for obj in objects:
+            obj = pygame.Rect(obj)
+            if self.xVel > 0:    
+                if self.rect.topRight + self.xVel > obj.rect.TopLeft - 2:
+                    self.xVel = 0
+            if self.xVel < 0:
+                if self.rect.topLeft + self.xVel > obj.rect.TopRight + 2:
+                    self.xVel = 0
+                    
     def handle_vertical_collision(self, objects):
         for obj in objects:
             obj = pygame.Rect(obj)
@@ -151,18 +148,16 @@ class Player(Objects):
                     self.hit_head()
                 self.collided_objects.append(obj)
 
-
-
     def handle_movement(self, objects):
+        self.handle_horizontal_collision()
         self.gravity()
         self.handle_vertical_collision(objects)
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
-            self.move_left()
+            self.move(-3)
         if keys[pygame.K_RIGHT]:
-            self.move_right()
+            self.move(3)
     
-
     def move_player(self, objects):
         self.handle_movement(objects)
         self.coordinates = [(self.rect.x, self.rect.y, self.rect.width, self.rect.height)]
@@ -205,7 +200,7 @@ def main(window):
     terrain = Terrain_Blocks("Terrains", "DirtTerrain.jpg", "The Terrain")
 
     # Store player object in this variable
-    player = Player("CharacterOne", "Idle.png", "The Player's Chosen Character")
+    player = Player("Characters", "RunningGuy.png", "The Player's Chosen Character")
 
 
     # Constant, infinitely running loop
@@ -228,7 +223,7 @@ def main(window):
         # Call the draw function every frame to update the screen
         draw(window, background, terrain, player, offset_x)
 
-        if ((player.rect.right - offset_x >= WIDTH - scroll_area_width)) or ((player.rect.left - offset_x <= scroll_area_width)):
+        if ((player.rect.right - offset_x >= WIDTH - scroll_area_width) and self.xVel > 0) or ((player.rect.left - offset_x <= scroll_area_width) and self.xVel < 0):
             print(player.xVel)
             offset_x += player.xVel 
 
