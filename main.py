@@ -6,6 +6,7 @@ import pygame
 
 # Import "join" method from os to help with saving images in variables
 from os.path import join, isfile
+from pygame._sdl2 import Window
 
 
 # INTIALIZE MODULES OR DIRECTORIES
@@ -18,10 +19,12 @@ pygame.init()
 pygame.display.set_caption("Platformer Game by Ibrahim Ismayilov")
 
 # Width and height of pygame window stored in variables
-WIDTH, HEIGHT = 1500, 800
+WIDTH, HEIGHT = 1200, 600
 
 # Intialize the pygame window for display
 window = pygame.display.set_mode((WIDTH, HEIGHT))
+canvas = pygame.Surface((WIDTH, HEIGHT))
+canvas_rect = pygame.Rect(0, 0, canvas.get_width(), canvas.get_height())
 
 # Create FPS variable to set max FPS of the game to be 60 when run
 FPS = 60
@@ -43,9 +46,10 @@ class Objects():
 
     # Methods
     # Function to draw the object's image with the correct coordinates on the screen
-    def draw(self, win, offset_x):
+    def draw(self, win, canvas, offset_x):
         for coordinate in self.coordinates:
-            win.blit(self.image, (coordinate[0] - offset_x, coordinate[1]))
+            canvas.blit(self.image, (coordinate[0], coordinate[1]))
+            win.blit(canvas, (0 - offset_x, 0))
 
 # Child class to get acquire all of the intialized attributes from the "Objects" Parent class but add its additional methods for drawing the background
 class Background(Objects):
@@ -53,36 +57,37 @@ class Background(Objects):
         super().__init__(image_folder, image_name, object_name)
 
     # Methods
-    def get_background_block_array(self, offset_x):
+    def get_background_block_array(self):
         for i in range(WIDTH // self.width + 1):
             for j in range(HEIGHT // self.height + 1):
                 # Put the data in a tuple to have its x and y coordinates be more accessible when appended to the "bg_tiles" array. Put it in a format that can access the x and y values. 
                 self.rect.x, self.rect.y = i * self.width, j * self.height
                 # Append it in a format that can access the x and y values 
                 # Why does the offset.x work here?  
-                self.coordinates.append((self.rect.x + offset_x, self.rect.y, self.rect.width, self.rect.height))
+                self.coordinates.append((self.rect.x, self.rect.y, self.rect.width, self.rect.height))
 
 # # Child class to get acquire all of the intialized attributes from the "Objects" Parent class but add its additional methods for drawing the terrain blocks
 class Terrain_Blocks(Objects):
     def __init__(self, image_folder, image_name, object_name): 
         super().__init__(image_folder, image_name, object_name)
 
-    def get_level_1_map(self):
-        self.level_1_map = [(350, HEIGHT - self.height * 3, self.width, self.height), (350 + self.width, HEIGHT - self.height * 3, self.width, self.height), (700, HEIGHT - self.height * 2, self.width, self.height), (700, HEIGHT - self.height * 3, self.width, self.height), (700 + self.width, HEIGHT - self.height * 4, self.width, self.height), (700 + self.width * 2, HEIGHT - self.height * 4, self.width, self.height), (700 + self.width * 3, HEIGHT- self.height * 3, self.width, self.height), (700 + self.width * 3, HEIGHT - self.height * 2, self.width, self.height), (1800, HEIGHT - self.height * 2, self.width, self.height), (1800 + self.width, HEIGHT - self.height * 3, self.width, self.height), (1800 + self.width * 2, HEIGHT - self.height * 4, self.width, self.height), (1800 + self.width * 3, HEIGHT - self.height * 5, self.width, self.height)]
-        self.coordinates.extend(self.level_1_map)
-
-    # Method to get block coordinates
-    def get_terrain_block_array(self):
-        for i in range (-WIDTH // self.width * 2, WIDTH // self.width * 2):
-            self.rect.x, self.rect.y = i * self.width, HEIGHT - self.height
-            self.coordinates.append((self.rect.x, self.rect.y, self.rect.width, self.rect.height))
-        
+    def get_level(self):
         if self.level == 1:
-            self.get_level_1_map()
+            self.get_level_1_terrain()
         elif self.level == 2:
             self.get_level_2_map()
         elif self.level == 3:
             self.get_level_3_map()
+
+    def get_level_1_terrain(self):
+        self.level_1_map = [(350, HEIGHT - self.height * 3, self.width, self.height), (350 + self.width, HEIGHT - self.height * 3, self.width, self.height), (700, HEIGHT - self.height * 2, self.width, self.height), (700, HEIGHT - self.height * 3, self.width, self.height), (700 + self.width, HEIGHT - self.height * 4, self.width, self.height), (700 + self.width * 2, HEIGHT - self.height * 4, self.width, self.height), (700 + self.width * 3, HEIGHT- self.height * 3, self.width, self.height), (700 + self.width * 3, HEIGHT - self.height * 2, self.width, self.height), (1800, HEIGHT - self.height * 2, self.width, self.height), (1800 + self.width, HEIGHT - self.height * 3, self.width, self.height), (1800 + self.width * 2, HEIGHT - self.height * 4, self.width, self.height), (1800 + self.width * 3, HEIGHT - self.height * 5, self.width, self.height)]
+        self.coordinates.extend(self.level_1_map)
+
+    # Method to get block coordinates
+    def get_terrain_floor_array(self):
+        for i in range (-WIDTH // self.width * 2, WIDTH // self.width * 2):
+            self.rect.x, self.rect.y = i * self.width, HEIGHT - self.height
+            self.coordinates.append((self.rect.x, self.rect.y, self.rect.width, self.rect.height))
         
         
 # Class to draw the player
@@ -93,7 +98,7 @@ class Player(Objects):
         super().__init__(image_folder, image_name, object_name)
         self.xVel = 0
         self.yVel = 0
-        self.rect = pygame.Rect(600, 50, self.width, self.height)
+        self.rect = pygame.Rect(230, 50, self.width, self.height)
         self.direction = "Right"
         self.jump_count = 0
         self.fall_count = 0
@@ -146,6 +151,7 @@ class Player(Objects):
                     self.hit_head()
                 self.collided_objects.append(obj)
 
+
     def handle_movement(self, objects):
         # self.handle_horizontal_collision(objects)
         self.gravity()
@@ -155,27 +161,26 @@ class Player(Objects):
             self.move(-3)
         if keys[pygame.K_RIGHT]:
             self.move(3)
-    
-    def move_player(self, objects):
-        self.handle_movement(objects)
+        
         self.coordinates = [(self.rect.x, self.rect.y, self.rect.width, self.rect.height)]
 
 
 # FUNCTIONS
 # THe main draw function to draw everything for the program or run other smaller drawing functions
-def draw(window, background, terrain, player, offset_x):
+def draw(window, background, terrain, player, canvas, offset_x, objects):
 
-    background.get_background_block_array(offset_x)
-    background.draw(window, offset_x)
+    window.fill((255, 255, 255))
 
-    terrain.get_terrain_block_array()
-    terrain.draw(window, offset_x)
+    if offset_x > WIDTH:
+        background.get_background_block_array()
 
-    objects = [*terrain.coordinates]
+    
+    background.draw(window, canvas, offset_x)
 
-    player.move_player(objects)
-    player.draw(window, offset_x)
+    terrain.draw(window, canvas, offset_x)
 
+    player.handle_movement(objects)
+    player.draw(window, canvas, offset_x)
     # Update the display
     pygame.display.update()
 
@@ -183,7 +188,7 @@ def draw(window, background, terrain, player, offset_x):
 
 # Main function to contain event handlers and run non-stop while program is open
 # Why pass the window parameter?
-def main(window):
+def main(window, canvas):
 
     offset_x = 0
     scroll_area_width = 200
@@ -192,10 +197,16 @@ def main(window):
     clock = pygame.time.Clock() 
 
     # Array to store all the terrain block coordinates to fill the screen
-    background = Background("Backgrounds", "Sky.jpg", "The Background")
+    background = Background("Backgrounds", "Sky.png", "The Background")
+    background.get_background_block_array()
+    background.draw(window, canvas, offset_x)
 
     # Store terrain object in this variable
-    terrain = Terrain_Blocks("Terrains", "DirtTerrain.jpg", "The Terrain")
+    terrain = Terrain_Blocks("Terrains", "DirtTerrain.png", "The Terrain")
+    terrain.get_terrain_floor_array()
+    terrain.get_level()
+    objects = [*terrain.coordinates]
+    print(objects)
 
     # Store player object in this variable
     player = Player("Characters", "RunningGuy.png", "The Player's Chosen Character")
@@ -205,8 +216,8 @@ def main(window):
     run = True
     while run:
         # A method to run every frame and make the game run at max 60 FPS on all machines
-        clock.tick(FPS)
-
+        clock.tick(60)
+        print(clock.get_fps())
         # Event handler
         for event in pygame.event.get():
             if event.type == pygame.QUIT: # If user closes the program, exit the while loop and quit pygame
@@ -219,11 +230,10 @@ def main(window):
 
 
         # Call the draw function every frame to update the screen
-        draw(window, background, terrain, player, offset_x)
+        draw(window, background, terrain, player, canvas, offset_x, objects)
 
-        # if ((player.rect.right - offset_x >= WIDTH - scroll_area_width) and player.xVel > 0) or ((player.rect.left - offset_x <= scroll_area_width) and player.xVel < 0):
-        #     print(player.xVel)
-        #     offset_x += player.xVel 
+        if (player.rect.left - offset_x < 200):
+            offset_x += player.xVel 
 
     # Quit pygame if the while loop has been broken
     pygame.quit()
@@ -231,7 +241,7 @@ def main(window):
 
 
 # Call main function to start the game
-main(window)
+main(window, canvas)
 
 
 
