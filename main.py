@@ -4,7 +4,7 @@
 # Import pygame
 import pygame
 
-# Import "join" and "isfile" methods from os to help with managing files without having to meddle with directories
+# Import "join" method from os to help with saving images in variables
 from os.path import join, isfile
 
 
@@ -23,18 +23,16 @@ WIDTH, HEIGHT = 1500, 800
 # Intialize the pygame window for display
 window = pygame.display.set_mode((WIDTH, HEIGHT))
 
-
-# GLOBAL VARIABLES TO BE ACCESSED LATER
 # Create FPS variable to set max FPS of the game to be 60 when run
-FPS = 90
+FPS = 60
 
 
 # CLASSES
-# A parent class for creating all objects in the game, with shared attributes among with containing different values (terrain blocks, etc)
-class Objects(pygame.sprite.Sprite):
+# A parent class for to serve as a base class when drawing all objects in the game, including characters, terrain blocks, the background tiles and etc
+class Objects():
     # Constructor
     def __init__(self, image_folder, image_name, object_name):
-        self.image = pygame.image.load(join("Assets", image_folder, image_name))
+        self.image = pygame.image.load(join("Assets", image_folder, image_name)).convert()
         self.width = self.image.get_width()
         self.height = self.image.get_width()
         self.rect = pygame.Rect(0, 0, self.width, self.height)
@@ -44,23 +42,17 @@ class Objects(pygame.sprite.Sprite):
 
 
     # Methods
-    def load_sprite_sheets(self):
-        # Explain these please to the best of your ability
-        path = join("Assets", image_folder, image_name)
-        # images = [f for f in ]
-
-
+    # Function to draw the object's image with the correct coordinates on the screen
     def draw(self, win, offset_x):
         for coordinate in self.coordinates:
             win.blit(self.image, (coordinate[0] - offset_x, coordinate[1]))
 
-
-# Class to get background
+# Child class to get acquire all of the intialized attributes from the "Objects" Parent class but add its additional methods for drawing the background
 class Background(Objects):
     def __init__(self, image_folder, image_name, object_name):
         super().__init__(image_folder, image_name, object_name)
 
-    # Method to get block
+    # Methods
     def get_background_block_array(self, offset_x):
         for i in range(WIDTH // self.width + 1):
             for j in range(HEIGHT // self.height + 1):
@@ -70,7 +62,7 @@ class Background(Objects):
                 # Why does the offset.x work here?  
                 self.coordinates.append((self.rect.x + offset_x, self.rect.y, self.rect.width, self.rect.height))
 
-# Class to get terrain blocks
+# # Child class to get acquire all of the intialized attributes from the "Objects" Parent class but add its additional methods for drawing the terrain blocks
 class Terrain_Blocks(Objects):
     def __init__(self, image_folder, image_name, object_name): 
         super().__init__(image_folder, image_name, object_name)
@@ -93,31 +85,24 @@ class Terrain_Blocks(Objects):
             self.get_level_3_map()
         
         
-          
-
-
 # Class to draw the player
 class Player(Objects):
     GRAVITY = 1   
 
-
     def __init__(self, image_folder, image_name, object_name):
         super().__init__(image_folder, image_name, object_name)
-        self.xVel = 3
+        self.xVel = 0
         self.yVel = 0
-        self.rect = pygame.Rect(1299, 50, self.width, self.height)
+        self.rect = pygame.Rect(600, 50, self.width, self.height)
         self.direction = "Right"
         self.jump_count = 0
         self.fall_count = 0
         self.collided_objects = []
 
     # Methods
-    def move_left(self):
-        self.rect.x += -self.xVel
-     
-    def move_right(self):
+    def move(self, x_vel):
+        self.xVel = x_vel
         self.rect.x += self.xVel
-        
 
     def gravity(self):
         self.yVel += min(1, self.fall_count / FPS * 3)
@@ -139,6 +124,16 @@ class Player(Objects):
         self.count = 0
         self.yVel *= -1
 
+    def handle_horizontal_collision(self, objects):
+        for obj in objects:
+            obj = pygame.Rect(obj)
+            if self.xVel > 0:    
+                if self.rect.topRight + self.xVel > obj.rect.topleft - 2:
+                    self.xVel = 0
+            if self.xVel < 0:
+                if self.rect.topleft + self.xVel > obj.rect.TopRight + 2:
+                    self.xVel = 0
+                    
     def handle_vertical_collision(self, objects):
         for obj in objects:
             obj = pygame.Rect(obj)
@@ -151,18 +146,16 @@ class Player(Objects):
                     self.hit_head()
                 self.collided_objects.append(obj)
 
-
-
     def handle_movement(self, objects):
+        # self.handle_horizontal_collision(objects)
         self.gravity()
         self.handle_vertical_collision(objects)
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
-            self.move_left()
+            self.move(-3)
         if keys[pygame.K_RIGHT]:
-            self.move_right()
+            self.move(3)
     
-
     def move_player(self, objects):
         self.handle_movement(objects)
         self.coordinates = [(self.rect.x, self.rect.y, self.rect.width, self.rect.height)]
@@ -205,7 +198,7 @@ def main(window):
     terrain = Terrain_Blocks("Terrains", "DirtTerrain.jpg", "The Terrain")
 
     # Store player object in this variable
-    player = Player("CharacterOne", "Idle.png", "The Player's Chosen Character")
+    player = Player("Characters", "RunningGuy.png", "The Player's Chosen Character")
 
 
     # Constant, infinitely running loop
@@ -228,7 +221,7 @@ def main(window):
         # Call the draw function every frame to update the screen
         draw(window, background, terrain, player, offset_x)
 
-        # if ((player.rect.right - offset_x >= WIDTH - scroll_area_width)) or ((player.rect.left - offset_x <= scroll_area_width)):
+        # if ((player.rect.right - offset_x >= WIDTH - scroll_area_width) and player.xVel > 0) or ((player.rect.left - offset_x <= scroll_area_width) and player.xVel < 0):
         #     print(player.xVel)
         #     offset_x += player.xVel 
 
