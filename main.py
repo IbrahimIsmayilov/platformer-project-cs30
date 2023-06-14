@@ -22,9 +22,7 @@ WIDTH, HEIGHT = 1200, 600
 
 # Intialize the pygame window for display
 window = pygame.display.set_mode((WIDTH, HEIGHT))
-canvas = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA, 32)
-canvas = canvas.convert_alpha()
-canvas_rect = pygame.Rect(0, 0, canvas.get_width(), canvas.get_height())
+canvas_rect = pygame.Rect(0, 0, WIDTH, HEIGHT)
 
 # Create FPS variable to set max FPS of the game to be 60 when run
 FPS = 60
@@ -41,14 +39,15 @@ class Objects():
         self.rect = pygame.Rect(0, 0, self.width, self.height)
         self.object_name = object_name
         self.level = 1
+        self.coordinates = []
         
 
     # Methods
     # Function to draw the object's image with the correct coordinates on the screen
-    def draw_and_create_surface(self, win, canvas, offset_x, canvas_rect):
+    def draw(self, win, canvas_rect):
         for coordinate in self.coordinates:
 
-            canvas.blit(self.image, (coordinate[0], coordinate[1]))
+            win.blit(self.image, (coordinate[0] - canvas_rect.x, coordinate[1]))
 
 # Child class to get acquire all of the intialized attributes from the "Objects" Parent class but add its additional methods for drawing the background
 class Background(Objects):
@@ -57,8 +56,8 @@ class Background(Objects):
 
     # Methods
     def get_background_block_array(self):
-        for i in range(-WIDTH // self.width + 1, WIDTH // self.width + 1):
-            for j in range(HEIGHT // self.height + 1):
+        for i in range(-30, 27):
+            for j in range(8):
                 # Put the data in a tuple to have its x and y coordinates be more accessible when appended to the "bg_tiles" array. Put it in a format that can access the x and y values. 
                 self.rect.x, self.rect.y = i * self.width, j * self.height
                 # Append it in a format that can access the x and y values 
@@ -91,16 +90,16 @@ class Terrain_Blocks(Objects):
             self.coordinates.append((self.rect.x, self.rect.y, self.rect.width, self.rect.height))
         
         
-class Coins(Objects):
-    def __init__(self, image_folder, image_name, object_name):
-        super().__init__(image_folder, image_name, object_name)
-        self.hit = False
+# class Coins(Objects):
+#     def __init__(self, image_folder, image_name, object_name):
+#         super().__init__(image_folder, image_name, object_name)
+#         self.hit = False
 
-    def disappear(self):
-        collided_obj, collided_rect  = handle_collision()
-        if collided_obj != "":
-            self.hit = True
-            collided_obj.pop(collided_rect)
+#     def disappear(self):
+#         collided_obj, collided_rect  = handle_collision()
+#         if collided_obj != "":
+#             self.hit = True
+#             collided_obj.pop(collided_rect)
 
 
 
@@ -165,17 +164,33 @@ class Player(Objects):
     def hit_head(self):
         self.count = 0
         self.yVel *= -1
+
+    def handle_vertical_collision(self, objects):
+        for obj in objects:
+            obj = pygame.Rect(obj)
+            if self.rect.colliderect(obj):
+                if self.yVel > 0:
+                   self.rect.bottom = obj.top
+                   self.landed()
+                if self.yVel < 0:
+                    self.rect.top = obj.bottom
+                    self.hit_head()
+                self.collided_objects.append(obj)
     
 
-    def handle_movement(self, player, terrain, coins):
+    def handle_movement(self, objects):
         # handle_collision(player, terrain, coins)
-        # self.gravity()
-
+        self.gravity()
+        self.handle_vertical_collision(objects)
         keys = pygame.key.get_pressed()
         self.xVel = 0
         if keys[pygame.K_LEFT]:
+            if self.direction != "Left":
+                self.direction = "Left"
             self.move(-3)
         if keys[pygame.K_RIGHT]:
+            if self.direction != "Right":
+                self.direction = "Right"
             self.move(3)
         
         self.coordinates = [(self.rect.x, self.rect.y, self.rect.width, self.rect.height)]
@@ -183,30 +198,22 @@ class Player(Objects):
 
 # FUNCTIONS
 # THe main draw function to draw everything for the program or run other smaller drawing functions
-def handle_collision(player, terrain, coins):
-    # for coordinate in terrain.coordinates:
-    #     x_offset = coordinate[0] - player.rect.left
-    #     y_offset = coordinate[1] - player.rect.top
-    #     if player.mask.overlap(terrain.mask, (x_offset, y_offset)):
-    #         print("i")
-    pass
+    
 
 
                 
                 
 
-def draw(window, background, terrain, player, canvas, offset_x, canvas_rect, coins):
+def draw(window, background, terrain, player, objects, canvas_rect):
 
 
-    background.draw(window, canvas, offset_x, canvas_rect)
+    background.draw(window, canvas_rect)
 
-    terrain.draw(window, canvas, offset_x, canvas_rect)
+    terrain.draw(window, canvas_rect)
 
-    player.handle_movement(player, terrain, coins)
-    player.draw(window, canvas, offset_x, canvas_rect)
+    player.handle_movement(objects)
+    player.draw(window, canvas_rect)
 
-
-    window.blit(canvas, (canvas_rect.x - offset_x, canvas_rect.y))
 
     # Update the display
     pygame.display.update()
@@ -215,10 +222,7 @@ def draw(window, background, terrain, player, canvas, offset_x, canvas_rect, coi
 
 # Main function to contain event handlers and run non-stop while program is open
 # Why pass the window parameter?
-def main(window, canvas, canvas_rect):
-
-    offset_x = 0
-    scroll_area_width = 200
+def main(window, canvas_rect):
 
     # A new clock variable that will be used to track the time and set a framerate
     clock = pygame.time.Clock() 
@@ -235,8 +239,9 @@ def main(window, canvas, canvas_rect):
     # Store player object in this variable
     player = Player("Characters", "RunningGuy.png", "The Player's Chosen Character")
 
-    coins = Coins("Coins", "Coins.png", "Level 1 Coins")
+    # coins = Coins("Coins", "Coins.png", "Level 1 Coins")
 
+    objects = [*terrain.coordinates]
 
     # Constant, infinitely running loop
     run = True
@@ -255,10 +260,10 @@ def main(window, canvas, canvas_rect):
 
 
         # Call the draw function every frame to update the screen
-        draw(window, background, terrain, player, canvas, offset_x, canvas_rect, coins)
+        draw(window, background, terrain, player, objects, canvas_rect)
 
-        if (player.rect.left < canvas_rect.x + 200 and player.xVel < 0):
-            offset_x += player.xVel
+        if (player.rect.left < canvas_rect.x + 200 and player.xVel < 0) or (player.rect.right > canvas_rect.right - 200):
+            canvas_rect.x += player.xVel
 
 
     # Quit pygame if the while loop has been broken
@@ -267,4 +272,4 @@ def main(window, canvas, canvas_rect):
 
 
 # Call main function to start the game
-main(window, canvas, canvas_rect)
+main(window, canvas_rect)
