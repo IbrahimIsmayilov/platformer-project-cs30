@@ -6,7 +6,6 @@ import pygame
 
 # Import "join" method from os to help with saving images in variables
 from os.path import join, isfile
-from pygame._sdl2 import Window
 
 
 # INTIALIZE MODULES OR DIRECTORIES
@@ -38,7 +37,7 @@ class Objects():
     def __init__(self, image_folder, image_name, object_name):
         self.image = pygame.image.load(join("Assets", image_folder, image_name)).convert_alpha()
         self.width = self.image.get_width()
-        self.height = self.image.get_width()
+        self.height = self.image.get_height()
         self.rect = pygame.Rect(0, 0, self.width, self.height)
         self.object_name = object_name
         self.level = 1
@@ -92,6 +91,41 @@ class Terrain_Blocks(Objects):
             self.coordinates.append((self.rect.x, self.rect.y, self.rect.width, self.rect.height))
         
         
+class Coins(Objects):
+    def __init__(self, image_folder, image_name, object_name):
+        super().__init__(image_folder, image_name, object_name)
+        self.hit = False
+
+    def disappear(self):
+        collided_obj, collided_rect  = handle_collision()
+        if collided_obj != "":
+            self.hit = True
+            collided_obj.pop(collided_rect)
+
+
+
+    def get_level_1_coins(self, terrain):
+        self.level_1_map = [(350, HEIGHT - terrain.height * 3 - self.height, self.width, self.height), (700 + terrain.width + 30, HEIGHT - terrain.height * 3 - self.height, self.wdith, self.height), (1800 + terrain.width * 3, HEIGHT - terrain.height * 5 - self.height)]
+
+        self.coordinates.extend(self.level_1_map)
+
+class Enemies(Objects):
+    def __init__(self, image_folder, image_name, object_name):
+        super().__init__(image_folder, image_name, object_name)
+        self.return_lap = False
+        self.moving = True
+
+    def enemy_movement(self):
+        for coordinate in self.coordinates:
+            if (coordinate.x < coordinate.x + 40) and (self.return_lap == False):
+                coordinate.x += 3
+            elif (coordinate.x > coordinate.x - 40):
+                self.return_lap = True
+                coordinate.x += -3
+
+
+
+
 # Class to draw the player
 class Player(Objects):
     GRAVITY = 1   
@@ -131,18 +165,12 @@ class Player(Objects):
     def hit_head(self):
         self.count = 0
         self.yVel *= -1
+    
 
-    # def handle_horizontal_collision(self, objects):
+    def handle_movement(self, player, terrain, coins):
+        # handle_collision(player, terrain, coins)
+        # self.gravity()
 
-            
-                    
-
-
-
-    def handle_movement(self):
-        # self.handle_horizontal_collision(s)
-        self.gravity()
-        handle_vertical_collision()
         keys = pygame.key.get_pressed()
         self.xVel = 0
         if keys[pygame.K_LEFT]:
@@ -155,25 +183,26 @@ class Player(Objects):
 
 # FUNCTIONS
 # THe main draw function to draw everything for the program or run other smaller drawing functions
-def handle_vertical_collision(player):
-    for coordinate in terrain.coordinates:
-        x_offset = coordinate[0] - player.rect.left
-        y_offset = coordinate[1] - player.rect.top
-        if player.mask.overlap(terrain.mask, (x_offset, y_offset)):
-            print("i")
+def handle_collision(player, terrain, coins):
+    # for coordinate in terrain.coordinates:
+    #     x_offset = coordinate[0] - player.rect.left
+    #     y_offset = coordinate[1] - player.rect.top
+    #     if player.mask.overlap(terrain.mask, (x_offset, y_offset)):
+    #         print("i")
+    pass
+
 
                 
                 
 
-def draw(window, background, terrain, player, canvas, offset_x, canvas_rect):
+def draw(window, background, terrain, player, canvas, offset_x, canvas_rect, coins):
 
 
     background.draw(window, canvas, offset_x, canvas_rect)
 
     terrain.draw(window, canvas, offset_x, canvas_rect)
 
-    player.handle_movement(player)
-    handle_vertical_collision(player)
+    player.handle_movement(player, terrain, coins)
     player.draw(window, canvas, offset_x, canvas_rect)
 
 
@@ -206,6 +235,8 @@ def main(window, canvas, canvas_rect):
     # Store player object in this variable
     player = Player("Characters", "RunningGuy.png", "The Player's Chosen Character")
 
+    coins = Coins("Coins", "Coins.png", "Level 1 Coins")
+
 
     # Constant, infinitely running loop
     run = True
@@ -224,10 +255,10 @@ def main(window, canvas, canvas_rect):
 
 
         # Call the draw function every frame to update the screen
-        draw(window, background, terrain, player, canvas, offset_x, canvas_rect)
+        draw(window, background, terrain, player, canvas, offset_x, canvas_rect, coins)
 
-        # if (player.rect.left < canvas_rect.x + 200 and player.xVel < 0):
-        #     offset_x += player.xVel
+        if (player.rect.left < canvas_rect.x + 200 and player.xVel < 0):
+            offset_x += player.xVel
 
 
     # Quit pygame if the while loop has been broken
@@ -237,10 +268,3 @@ def main(window, canvas, canvas_rect):
 
 # Call main function to start the game
 main(window, canvas, canvas_rect)
-
-
-
-
-
-# Thing sto ask
-# animation feels off, how do i roate image in the x axis depending on the direction, why cant i just append rects to coordinates, how do surfaces work
