@@ -104,10 +104,11 @@ class Coins(Objects):
 
         self.coordinates.extend(self.level_1_map)
 
-
+    # Method to check if the user has collected enough coins to win the game
     def check_coins(self):
         if self.coins_collected == 4:
             print("YOU WIN!")
+
 # class Enemies(Objects):
 #     def __init__(self, image_folder, image_name, object_name):
 #         super().__init__(image_folder, image_name, object_name)
@@ -132,7 +133,6 @@ class Player(Objects):
         self.lvl_xVel = 3
         self.xVel = 0
         self.yVel = 0
-        self.mask = pygame.mask.from_surface(self.image)
         self.rect = pygame.Rect(500, 50, self.width, self.height)
         self.moving_direction = "Right" 
         self.jump_count = 0
