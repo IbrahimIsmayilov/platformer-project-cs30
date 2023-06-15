@@ -46,7 +46,6 @@ class Objects():
     # Function to draw the object's image with the correct coordinates on the screen
     def draw(self, win, canvas_rect):
         for coordinate in self.coordinates:
-
             win.blit(self.image, (coordinate[0] - canvas_rect.x, coordinate[1]))
 
 
@@ -97,26 +96,31 @@ class Coins(Objects):
         super().__init__(image_folder, image_name, object_name)
         self.collided_coins = []
         self.hit = False
+        self.coins_collected = 0
 
     # Method to append specific coordinates based on the level to its coordinates array which will be drawn by the draw function
     def get_level_1_coins(self, terrain):
-        self.level_1_map = [(350, HEIGHT - terrain.height * 3 - self.height, self.width, self.height, self.object_name), (700 + terrain.width + 30, HEIGHT - terrain.height * 2, self.width, self.height, self.object_name), (1800 + terrain.width * 3, HEIGHT - terrain.height * 5 - self.height, self.width, self.height, self.object_name), (1800 + terrain.width + 10, HEIGHT - terrain.height * 2 + 10, self.width, self.height, self.object_name)]
+        self.level_1_map = [(350, HEIGHT - terrain.height * 3 - self.height, self.width, self.height, self.object_name), (700 + terrain.width + 30, HEIGHT - terrain.height * 5, self.width, self.height, self.object_name), (1800 + terrain.width * 3, HEIGHT - terrain.height * 5 - self.height, self.width, self.height, self.object_name), (1800 + terrain.width + 10, HEIGHT - terrain.height * 2 + 10, self.width, self.height, self.object_name)]
 
         self.coordinates.extend(self.level_1_map)
 
-class Enemies(Objects):
-    def __init__(self, image_folder, image_name, object_name):
-        super().__init__(image_folder, image_name, object_name)
-        self.return_lap = False
-        self.moving = True
 
-    def enemy_movement(self):
-        for coordinate in self.coordinates:
-            if (coordinate.x < coordinate.x + 40) and (self.return_lap == False):
-                coordinate.x += 3
-            elif (coordinate.x > coordinate.x - 40):
-                self.return_lap = True
-                coordinate.x += -3
+    def check_coins(self):
+        if self.coins_collected == 4:
+            print("YOU WIN!")
+# class Enemies(Objects):
+#     def __init__(self, image_folder, image_name, object_name):
+#         super().__init__(image_folder, image_name, object_name)
+#         self.return_lap = False
+#         self.moving = True
+
+#     def enemy_movement(self):
+#         for coordinate in self.coordinates:
+#             if (coordinate.x < coordinate.x + 40) and (self.return_lap == False):
+#                 coordinate.x += 3
+#             elif (coordinate.x > coordinate.x - 40):
+#                 self.return_lap = True
+#                 coordinate.x += -3
 
 
 # Player class that inherits attributes from Objects parent class and handles almost everything related to the character drawn on the screen including speed, gravity, etc. 
@@ -135,34 +139,39 @@ class Player(Objects):
         self.fall_count = 0
         self.collided_objects = []
 
-    # Methods
+    # Method to move left when the user presses the left arrowkey
     def move_left(self):
         self.rect.x += self.xVel
 
+    # Method to move right when the user presses the right arrow key
     def move_right(self):
         self.rect.x += self.xVel
 
+    # Method to instill constant gravity when the user is in the air
     def gravity(self):
         self.yVel += min(1, self.fall_count / FPS * 3)
         self.rect.y += self.yVel
         self.fall_count += 1
 
+    # Method to move the user up when the user presses the backspace key, allowing them to double jump too
     def jump(self):
         self.yVel = -self.GRAVITY * 12
         self.jump_count += 1
         if self.jump_count == 1:
             self.fall_count = 0
 
+    # Method to move to have the user land on a surface and reset things like gravity, when they collided with an object whilst having a yVel greater than zero
     def landed(self):
         self.jump_count = 0
         self.fall_count = 0
         self.yVel = 0
     
+    # Method to reverse the user's yVel and have them head down once they collided with an object while jumping
     def hit_head(self):
         self.fall_count = 0
         self.yVel *= -1
     
-
+    # Method to move the player depending on which key is pressed and change their position on the screen
     def handle_player_movement(self):
         self.xVel = 0
 
@@ -185,7 +194,6 @@ class Player(Objects):
 
 
 # FUNCTIONS
-# The main draw function to draw everything for the program or run other smaller drawing functions
 
 # Function to handle the vertical collisions involving the player
 def handle_vertical_collision(player, terrain, coins):
@@ -203,6 +211,9 @@ def handle_vertical_collision(player, terrain, coins):
             elif coordinate[-1] == "Coins":
                 index = coins.coordinates.index(coordinate)
                 coins.coordinates.pop(index)
+                coins.coins_collected += 1
+                coins.check_coins()
+
 
 # Function to handle horizontal collisions to the right of the player
 def handle_right_collision(player, terrain, coins):
@@ -216,6 +227,8 @@ def handle_right_collision(player, terrain, coins):
             elif coordinate[-1] == "Coins":
                 index = coins.coordinates.index(coordinate)
                 coins.coordinates.pop(index)
+                coins.coins_collected += 1
+                coins.check_coins()
 
     player.rect.x -= 5
 
@@ -231,6 +244,8 @@ def handle_left_collision(player, terrain, coins):
             elif coordinate[-1] == "Coins":
                 index = coins.coordinates.index(coordinate)
                 coins.coordinates.pop(index)
+                coins.coins_collected += 1
+                coins.check_coins()
     player.rect.x += 5
                 
                 
@@ -255,8 +270,10 @@ def draw(window, background, terrain, player, canvas_rect, coins):
     
 
 # Main function to contain event handlers and run non-stop while program is open
-# Why pass the window parameter?
 def main(window, canvas_rect):
+    # Starter Message
+    print("Collect All The Coins to Win!")
+
     # A new clock variable that will be used to track the time and set a framerate
     clock = pygame.time.Clock() 
 
