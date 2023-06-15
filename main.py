@@ -55,6 +55,7 @@ class Background(Objects):
         super().__init__(image_folder, image_name, object_name)
 
     # Methods
+    # Function to append the coordinates for drawing the background tiles
     def get_background_block_array(self):
         for i in range(-30, 27):
             for j in range(8):
@@ -62,12 +63,13 @@ class Background(Objects):
                 self.rect.x, self.rect.y = i * self.width, j * self.height
                 # Append it in a format that can access the x and y values 
                 # Why does the offset.x work here?  
-                self.coordinates.append((self.rect.x, self.rect.y, self.rect.width, self.rect.height))
+                self.coordinates.append((self.rect.x, self.rect.y, self.rect.width, self.rect.height, self.object_name))
 
         
 
 # # Child class to get acquire all of the intialized attributes from the "Objects" Parent class but add its additional methods for drawing the terrain blocks
 class Terrain_Blocks(Objects):
+    
     def __init__(self, image_folder, image_name, object_name): 
         super().__init__(image_folder, image_name, object_name)
 
@@ -80,33 +82,31 @@ class Terrain_Blocks(Objects):
             self.get_level_3_map()
 
     def get_level_1_terrain(self):
-        self.level_1_map = [(350, HEIGHT - self.height * 3, self.width, self.height), (350 + self.width, HEIGHT - self.height * 3, self.width, self.height), (700, HEIGHT - self.height * 2, self.width, self.height), (700, HEIGHT - self.height * 3, self.width, self.height), (700 + self.width, HEIGHT - self.height * 4, self.width, self.height), (700 + self.width * 2, HEIGHT - self.height * 4, self.width, self.height), (700 + self.width * 3, HEIGHT- self.height * 3, self.width, self.height), (700 + self.width * 3, HEIGHT - self.height * 2, self.width, self.height), (1800, HEIGHT - self.height * 2, self.width, self.height), (1800 + self.width, HEIGHT - self.height * 3, self.width, self.height), (1800 + self.width * 2, HEIGHT - self.height * 4, self.width, self.height), (1800 + self.width * 3, HEIGHT - self.height * 5, self.width, self.height)]
+        self.level_1_map = [(350, HEIGHT - self.height * 3, self.width, self.height, self.object_name), (350 + self.width, HEIGHT - self.height * 3, self.width, self.height, self.object_name), (700, HEIGHT - self.height * 2, self.width, self.height, self.object_name), (700, HEIGHT - self.height * 3, self.width, self.height, self.object_name), (700 + self.width, HEIGHT - self.height * 4, self.width, self.height, self.object_name), (700 + self.width * 2, HEIGHT - self.height * 4, self.width, self.height, self.object_name), (700 + self.width * 3, HEIGHT- self.height * 3, self.width, self.height, self.object_name), (700 + self.width * 3, HEIGHT - self.height * 2, self.width, self.height, self.object_name), (1800, HEIGHT - self.height * 2, self.width, self.height, self.object_name), (1800 + self.width, HEIGHT - self.height * 3, self.width, self.height, self.object_name), (1800 + self.width * 2, HEIGHT - self.height * 4, self.width, self.height, self.object_name), (1800 + self.width * 3, HEIGHT - self.height * 5, self.width, self.height, self.object_name)]
         self.coordinates.extend(self.level_1_map)
 
     # Method to get block coordinates
     def get_terrain_floor_array(self):
         for i in range (-30, 40):
             self.rect.x, self.rect.y = i * self.width, HEIGHT - self.height
-            self.coordinates.append((self.rect.x, self.rect.y, self.rect.width, self.rect.height))
+            self.coordinates.append((self.rect.x, self.rect.y, self.rect.width, self.rect.height, self.object_name))
         
         
-# class Coins(Objects):
-#     def __init__(self, image_folder, image_name, object_name):
-#         super().__init__(image_folder, image_name, object_name)
-#         self.hit = False
-
-#     def disappear(self):
-#         collided_obj, collided_rect  = handle_collision()
-#         if collided_obj != "":
-#             self.hit = True
-#             collided_obj.pop(collided_rect)
-
-
+class Coins(Objects):
+    def __init__(self, image_folder, image_name, object_name):
+        super().__init__(image_folder, image_name, object_name)
+        self.collided_coins = []
+        self.hit = False
 
     def get_level_1_coins(self, terrain):
-        self.level_1_map = [(350, HEIGHT - terrain.height * 3 - self.height, self.width, self.height), (700 + terrain.width + 30, HEIGHT - terrain.height * 3 - self.height, self.wdith, self.height), (1800 + terrain.width * 3, HEIGHT - terrain.height * 5 - self.height)]
+        self.level_1_map = [(350, HEIGHT - terrain.height * 3 - self.height, self.width, self.height, self.object_name), (700 + terrain.width + 30, HEIGHT - terrain.height * 2, self.width, self.height, self.object_name), (1800 + terrain.width * 3, HEIGHT - terrain.height * 5 - self.height, self.width, self.height, self.object_name), (1800 + terrain.width + 10, HEIGHT - terrain.height * 2 + 10, self.width, self.height, self.object_name)]
 
         self.coordinates.extend(self.level_1_map)
+
+    def hit(self, coordinate):
+        for i in range(len(self.coordinates)):
+            if self.coordinates[i] == coordinate:
+                self.coordinates.pop(i)
 
 class Enemies(Objects):
     def __init__(self, image_folder, image_name, object_name):
@@ -131,18 +131,21 @@ class Player(Objects):
 
     def __init__(self, image_folder, image_name, object_name):
         super().__init__(image_folder, image_name, object_name)
+        self.lvl_xVel = 3
         self.xVel = 0
         self.yVel = 0
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = pygame.Rect(500, 50, self.width, self.height)
-        self.direction = "Right"
+        self.moving_direction = "Right" 
         self.jump_count = 0
         self.fall_count = 0
         self.collided_objects = []
 
     # Methods
-    def move(self, vel):
-        self.xVel = vel
+    def move_left(self):
+        self.rect.x += self.xVel
+
+    def move_right(self):
         self.rect.x += self.xVel
 
     def gravity(self):
@@ -162,57 +165,94 @@ class Player(Objects):
         self.yVel = 0
     
     def hit_head(self):
-        self.count = 0
+        self.fall_count = 0
         self.yVel *= -1
-
-    def handle_vertical_collision(self, objects):
-        for obj in objects:
-            obj = pygame.Rect(obj)
-            if self.rect.colliderect(obj):
-                if self.yVel > 0:
-                   self.rect.bottom = obj.top
-                   self.landed()
-                if self.yVel < 0:
-                    self.rect.top = obj.bottom
-                    self.hit_head()
-                self.collided_objects.append(obj)
     
 
-    def handle_movement(self, objects):
-        # handle_collision(player, terrain, coins)
-        self.gravity()
-        self.handle_vertical_collision(objects)
-        keys = pygame.key.get_pressed()
+    def handle_player_movement(self):
         self.xVel = 0
+
+        keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
-            if self.direction != "Left":
-                self.direction = "Left"
-            self.move(-3)
+            self.xVel = -3
+            if self.moving_direction != "Left":
+                self.moving_direction = "Left"
+                self.image = pygame.transform.flip(self.image, True, False)
+            self.move_left()
         if keys[pygame.K_RIGHT]:
-            if self.direction != "Right":
-                self.direction = "Right"
-            self.move(3)
+            self.xVel = 3
+            if self.moving_direction != "Right":
+                self.moving_direction = "Right"
+                self.image = pygame.transform.flip(self.image, True, False)
+            self.move_right()
+
         
         self.coordinates = [(self.rect.x, self.rect.y, self.rect.width, self.rect.height)]
 
 
 # FUNCTIONS
-# THe main draw function to draw everything for the program or run other smaller drawing functions
+# The main draw function to draw everything for the program or run other smaller drawing functions
     
+def handle_vertical_collision(player, terrain, coins):
+    all_coordinates = (*terrain.coordinates, *coins.coordinates)
+    for coordinate in all_coordinates:
+        coordinate_rect = pygame.Rect((coordinate[0]), (coordinate[1]), (coordinate[2]), (coordinate[3]))
+        if player.rect.colliderect(coordinate_rect):
+            if coordinate[-1] == "The Terrain":
+                if player.yVel > 0:
+                    player.rect.bottom = coordinate_rect.top
+                    player.landed()
+                if player.yVel < 0:
+                    player.rect.top = coordinate_rect.bottom
+                    player.hit_head()
+            elif coordinate[-1] == "Coins":
+                index = coins.coordinates.index(coordinate)
+                coins.coordinates.pop(index)
+
+def handle_right_collision(player, terrain, coins):
+    player.rect.x += 5
+    all_coordinates = (*terrain.coordinates, *coins.coordinates)
+    for coordinate in all_coordinates:
+        coordinate_rect = pygame.Rect((coordinate[0]), (coordinate[1]), (coordinate[2]), (coordinate[3]))
+        if player.rect.colliderect(coordinate_rect):
+            if coordinate[-1] == "The Terrain":
+                player.rect.x -= player.xVel
+            elif coordinate[-1] == "Coins":
+                index = coins.coordinates.index(coordinate)
+                coins.coordinates.pop(index)
+
+    player.rect.x -= 5
+    
+def handle_left_collision(player, terrain, coins):
+    player.rect.x -= 5
+    all_coordinates = [*terrain.coordinates, *coins.coordinates]
+    for coordinate in all_coordinates:
+        coordinate_rect = pygame.Rect((coordinate[0]), (coordinate[1]), (coordinate[2]), (coordinate[3]))
+        if player.rect.colliderect(coordinate_rect):
+            if coordinate[-1] == "The Terrain":
+                player.rect.x -= player.xVel
+            elif coordinate[-1] == "Coins":
+                index = coins.coordinates.index(coordinate)
+                coins.coordinates.pop(index)
+    player.rect.x += 5
 
 
                 
                 
 
-def draw(window, background, terrain, player, objects, canvas_rect):
+def draw(window, background, terrain, player, canvas_rect, coins):
 
 
     background.draw(window, canvas_rect)
 
     terrain.draw(window, canvas_rect)
-
-    player.handle_movement(objects)
+    player.handle_player_movement()
+    handle_left_collision(player, terrain, coins)
+    handle_right_collision(player, terrain, coins)
+    player.gravity()
+    handle_vertical_collision(player, terrain, coins)
     player.draw(window, canvas_rect)
+    coins.draw(window, canvas_rect)
 
 
     # Update the display
@@ -223,7 +263,6 @@ def draw(window, background, terrain, player, objects, canvas_rect):
 # Main function to contain event handlers and run non-stop while program is open
 # Why pass the window parameter?
 def main(window, canvas_rect):
-
     # A new clock variable that will be used to track the time and set a framerate
     clock = pygame.time.Clock() 
 
@@ -232,16 +271,16 @@ def main(window, canvas_rect):
     background.get_background_block_array()
 
     # Store terrain object in this variable
-    terrain = Terrain_Blocks("Terrains", "DirtTerrain.png", "The Terrain")
+    terrain = Terrain_Blocks("Terrains", "DirtTerrain.jpg", "The Terrain")
     terrain.get_terrain_floor_array()
     terrain.get_level()
 
     # Store player object in this variable
     player = Player("Characters", "RunningGuy.png", "The Player's Chosen Character")
 
-    # coins = Coins("Coins", "Coins.png", "Level 1 Coins")
+    coins = Coins("Coins", "Coins.png", "Coins")
+    coins.get_level_1_coins(terrain)
 
-    objects = [*terrain.coordinates]
 
     # Constant, infinitely running loop
     run = True
@@ -260,9 +299,9 @@ def main(window, canvas_rect):
 
 
         # Call the draw function every frame to update the screen
-        draw(window, background, terrain, player, objects, canvas_rect)
+        draw(window, background, terrain, player, canvas_rect, coins)
 
-        if (player.rect.left < canvas_rect.x + 200 and player.xVel < 0) or (player.rect.right > canvas_rect.right - 200):
+        if (player.rect.left < canvas_rect.x + 200 and player.xVel < 0) or (player.rect.right > canvas_rect.right - 200 and player.xVel > 0):
             canvas_rect.x += player.xVel
 
 
