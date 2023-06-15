@@ -49,6 +49,7 @@ class Objects():
 
             win.blit(self.image, (coordinate[0] - canvas_rect.x, coordinate[1]))
 
+
 # Child class to get acquire all of the intialized attributes from the "Objects" Parent class but add its additional methods for drawing the background
 class Background(Objects):
     def __init__(self, image_folder, image_name, object_name):
@@ -59,20 +60,18 @@ class Background(Objects):
     def get_background_block_array(self):
         for i in range(-30, 27):
             for j in range(8):
-                # Put the data in a tuple to have its x and y coordinates be more accessible when appended to the "bg_tiles" array. Put it in a format that can access the x and y values. 
+                # Put the data in a tuple to have its x and y coordinates be more accessible when appended to the coordinates array. Put it in a format that can access the x and y values. 
                 self.rect.x, self.rect.y = i * self.width, j * self.height
                 # Append it in a format that can access the x and y values 
-                # Why does the offset.x work here?  
                 self.coordinates.append((self.rect.x, self.rect.y, self.rect.width, self.rect.height, self.object_name))
 
-        
 
 # # Child class to get acquire all of the intialized attributes from the "Objects" Parent class but add its additional methods for drawing the terrain blocks
 class Terrain_Blocks(Objects):
-    
     def __init__(self, image_folder, image_name, object_name): 
         super().__init__(image_folder, image_name, object_name)
 
+    # Method to draw terrain based on which level the user is on
     def get_level(self):
         if self.level == 1:
             self.get_level_1_terrain()
@@ -81,6 +80,7 @@ class Terrain_Blocks(Objects):
         elif self.level == 3:
             self.get_level_3_map()
 
+    # Method to append the coordinates for creating the level 1 map terrain
     def get_level_1_terrain(self):
         self.level_1_map = [(350, HEIGHT - self.height * 3, self.width, self.height, self.object_name), (350 + self.width, HEIGHT - self.height * 3, self.width, self.height, self.object_name), (700, HEIGHT - self.height * 2, self.width, self.height, self.object_name), (700, HEIGHT - self.height * 3, self.width, self.height, self.object_name), (700 + self.width, HEIGHT - self.height * 4, self.width, self.height, self.object_name), (700 + self.width * 2, HEIGHT - self.height * 4, self.width, self.height, self.object_name), (700 + self.width * 3, HEIGHT- self.height * 3, self.width, self.height, self.object_name), (700 + self.width * 3, HEIGHT - self.height * 2, self.width, self.height, self.object_name), (1800, HEIGHT - self.height * 2, self.width, self.height, self.object_name), (1800 + self.width, HEIGHT - self.height * 3, self.width, self.height, self.object_name), (1800 + self.width * 2, HEIGHT - self.height * 4, self.width, self.height, self.object_name), (1800 + self.width * 3, HEIGHT - self.height * 5, self.width, self.height, self.object_name)]
         self.coordinates.extend(self.level_1_map)
@@ -90,23 +90,19 @@ class Terrain_Blocks(Objects):
         for i in range (-30, 40):
             self.rect.x, self.rect.y = i * self.width, HEIGHT - self.height
             self.coordinates.append((self.rect.x, self.rect.y, self.rect.width, self.rect.height, self.object_name))
-        
-        
+
+# Coins class that inherits attributes from Objects parents class and has methods from generating coins at set places on the map 
 class Coins(Objects):
     def __init__(self, image_folder, image_name, object_name):
         super().__init__(image_folder, image_name, object_name)
         self.collided_coins = []
         self.hit = False
 
+    # Method to append specific coordinates based on the level to its coordinates array which will be drawn by the draw function
     def get_level_1_coins(self, terrain):
         self.level_1_map = [(350, HEIGHT - terrain.height * 3 - self.height, self.width, self.height, self.object_name), (700 + terrain.width + 30, HEIGHT - terrain.height * 2, self.width, self.height, self.object_name), (1800 + terrain.width * 3, HEIGHT - terrain.height * 5 - self.height, self.width, self.height, self.object_name), (1800 + terrain.width + 10, HEIGHT - terrain.height * 2 + 10, self.width, self.height, self.object_name)]
 
         self.coordinates.extend(self.level_1_map)
-
-    def hit(self, coordinate):
-        for i in range(len(self.coordinates)):
-            if self.coordinates[i] == coordinate:
-                self.coordinates.pop(i)
 
 class Enemies(Objects):
     def __init__(self, image_folder, image_name, object_name):
@@ -123,9 +119,7 @@ class Enemies(Objects):
                 coordinate.x += -3
 
 
-
-
-# Class to draw the player
+# Player class that inherits attributes from Objects parent class and handles almost everything related to the character drawn on the screen including speed, gravity, etc. 
 class Player(Objects):
     GRAVITY = 1   
 
@@ -192,7 +186,8 @@ class Player(Objects):
 
 # FUNCTIONS
 # The main draw function to draw everything for the program or run other smaller drawing functions
-    
+
+# Function to handle the vertical collisions involving the player
 def handle_vertical_collision(player, terrain, coins):
     all_coordinates = (*terrain.coordinates, *coins.coordinates)
     for coordinate in all_coordinates:
@@ -209,6 +204,7 @@ def handle_vertical_collision(player, terrain, coins):
                 index = coins.coordinates.index(coordinate)
                 coins.coordinates.pop(index)
 
+# Function to handle horizontal collisions to the right of the player
 def handle_right_collision(player, terrain, coins):
     player.rect.x += 5
     all_coordinates = (*terrain.coordinates, *coins.coordinates)
@@ -222,7 +218,8 @@ def handle_right_collision(player, terrain, coins):
                 coins.coordinates.pop(index)
 
     player.rect.x -= 5
-    
+
+# Function to handle horizontal collisions to the left of the player
 def handle_left_collision(player, terrain, coins):
     player.rect.x -= 5
     all_coordinates = [*terrain.coordinates, *coins.coordinates]
@@ -235,14 +232,11 @@ def handle_left_collision(player, terrain, coins):
                 index = coins.coordinates.index(coordinate)
                 coins.coordinates.pop(index)
     player.rect.x += 5
-
-
                 
                 
-
+# Draw function for drawing everything
 def draw(window, background, terrain, player, canvas_rect, coins):
-
-
+    
     background.draw(window, canvas_rect)
 
     terrain.draw(window, canvas_rect)
@@ -278,6 +272,7 @@ def main(window, canvas_rect):
     # Store player object in this variable
     player = Player("Characters", "RunningGuy.png", "The Player's Chosen Character")
 
+    # Store coin object in this variable
     coins = Coins("Coins", "Coins.png", "Coins")
     coins.get_level_1_coins(terrain)
 
@@ -301,6 +296,7 @@ def main(window, canvas_rect):
         # Call the draw function every frame to update the screen
         draw(window, background, terrain, player, canvas_rect, coins)
 
+        # Check if the user goes past the screen enough that the screen starts scrolling
         if (player.rect.left < canvas_rect.x + 200 and player.xVel < 0) or (player.rect.right > canvas_rect.right - 200 and player.xVel > 0):
             canvas_rect.x += player.xVel
 
